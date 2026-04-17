@@ -6,7 +6,7 @@ import {
   Table as TableIcon, Server, HardDrive, UserPlus, Shield,
   SearchCode, Eye, UploadCloud,
   FileText, Package, Wallet, 
-  Boxes, Truck
+  Boxes, Truck, Coins
 } from 'lucide-react';
 import { useStore } from '../store/GlobalContext';
 import { StaffRole } from '../types';
@@ -116,6 +116,21 @@ export default function Configuracion() {
             <div className="lg:col-span-2 space-y-8">
               <div className="bg-slate-900 p-10 rounded-[48px] border-2 border-slate-800 shadow-2xl">
                 <div className="space-y-8">
+                  <div className="p-8 bg-slate-50 rounded-[32px] border border-slate-100 space-y-6">
+                    <h4 className="text-slate-900 font-black text-sm uppercase italic flex items-center gap-2">
+                       <Coins size={18} className="text-amber-600" /> Configuración de Comisiones
+                    </h4>
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Fardo Normal ($)</label>
+                         <input type="number" className="w-full px-6 py-4 bg-white border-2 border-slate-200 rounded-2xl font-black text-lg" value={settings.fardoNormalCommission || 3000} onChange={e => updateSettings({ fardoNormalCommission: Number(e.target.value) })} />
+                      </div>
+                      <div className="space-y-2">
+                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Fardo Promo ($)</label>
+                         <input type="number" className="w-full px-6 py-4 bg-white border-2 border-slate-200 rounded-2xl font-black text-lg" value={settings.fardoPromoCommission || 1500} onChange={e => updateSettings({ fardoPromoCommission: Number(e.target.value) })} />
+                      </div>
+                    </div>
+                  </div>
                   <div className="flex items-center gap-6">
                     <div className="w-20 h-20 rounded-[30px] flex items-center justify-center transition-all bg-amber-600 shadow-[0_0_30px_rgba(37,99,235,0.4)]">
                       <Globe size={40} className="text-white" />

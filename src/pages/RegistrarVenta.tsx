@@ -135,9 +135,9 @@ export default function RegistrarVenta() {
             
             <div className="md:col-span-1">
               <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">
-                <Phone size={14} className="text-amber-500" /> WhatsApp
+                <Phone size={14} className="text-amber-500" /> WhatsApp / Teléfono
               </label>
-              <input required type="tel" className="w-full px-7 py-5 bg-slate-50 border-2 border-slate-100 rounded-[24px] text-xl font-black focus:border-amber-500 outline-none transition-all" placeholder="+569..." value={formData.telefono} onChange={(e) => setFormData({...formData, telefono: e.target.value})}/>
+              <input required type="tel" className="w-full px-7 py-5 bg-slate-50 border-2 border-slate-100 rounded-[24px] text-xl font-black focus:border-amber-500 outline-none transition-all" placeholder="+54 9..." value={formData.telefono} onChange={(e) => setFormData({...formData, telefono: e.target.value})}/>
             </div>
 
             <div className="md:col-span-1">
@@ -176,8 +176,8 @@ export default function RegistrarVenta() {
           {mode === 'NORMAL' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-10 bg-amber-50/30 rounded-[40px] border-2 border-amber-100 animate-in fade-in slide-in-from-top duration-500">
                <div className="md:col-span-1">
-                <label className="flex items-center gap-2 text-[10px] font-black text-amber-600 uppercase tracking-widest mb-3 ml-2"><CreditCard size={14} /> RUT Cliente</label>
-                <input required type="text" className="w-full px-7 py-5 bg-white border-2 border-amber-100 rounded-[24px] font-black" placeholder="12.345.678-9" value={formData.rut} onChange={(e) => setFormData({...formData, rut: e.target.value})}/>
+                <label className="flex items-center gap-2 text-[10px] font-black text-amber-600 uppercase tracking-widest mb-3 ml-2"><CreditCard size={14} /> DNI Cliente</label>
+                <input required type="text" className="w-full px-7 py-5 bg-white border-2 border-amber-100 rounded-[24px] font-black" placeholder="12.345.678" value={formData.rut} onChange={(e) => setFormData({...formData, rut: e.target.value})}/>
               </div>
               <div className="md:col-span-1">
                 <label className="flex items-center gap-2 text-[10px] font-black text-amber-600 uppercase tracking-widest mb-3 ml-2"><MapPin size={14} /> Dirección Despacho</label>

@@ -24,7 +24,7 @@ import { useStore } from '../store/GlobalContext';
 import { SaleStatus, Sale, DispatchType, DispatchStatus } from '../types';
 
 export default function Despachos() {
-  const { sales, markAsSent, updateDispatchStatus, updateDispatchItems, assignCarrier, playSound } = useStore();
+  const { sales, markAsSent, updateDispatchStatus, updateDispatchItems, assignCarrier, playSound, carriers } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeTab, setActiveTab] = useState<'AGENCIA' | 'DOMICILIO' | 'HISTORIAL'>('AGENCIA');
@@ -49,7 +49,7 @@ export default function Despachos() {
                     : historySales;
 
   const handleExportExcel = () => {
-    const headers = ["N_Venta", "Cliente", "RUT", "Direccion", "Telefono", "Producto", "Cant", "Tipo", "Status"];
+    const headers = ["N_Venta", "Cliente", "DNI", "Direccion", "Telefono", "Producto", "Cant", "Tipo", "Status"];
     const rows = currentList.map(s => [
       s.numeroVenta,
       s.cliente,
@@ -276,7 +276,7 @@ export default function Despachos() {
                           onChange={(e) => assignCarrier(sale.id, e.target.value)}
                         >
                           <option value="">Seleccionar Transportista...</option>
-                          {useStore().carriers.map(c => (
+                          {carriers.map(c => (
                             <option key={c} value={c}>{c}</option>
                           ))}
                         </select>

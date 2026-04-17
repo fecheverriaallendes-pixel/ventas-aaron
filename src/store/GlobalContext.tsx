@@ -12,7 +12,7 @@ const INITIAL_MASTER_STOCK: Omit<StockItem, 'id' | 'disponible'>[] = [
 
 interface StoreContextType {
   currentUser: { nombre: string; rol: StaffRole } | null;
-  settings: { soundEnabled: boolean; cloudUrl: string; lastSync: string | null; dbConnected: boolean; lastError: string | null; dolarBlueRate: number };
+  settings: { soundEnabled: boolean; cloudUrl: string; lastSync: string | null; dbConnected: boolean; lastError: string | null; dolarBlueRate: number; fardoNormalCommission: number; fardoPromoCommission: number; };
   updateSettings: (newSettings: any) => void;
   playSound: (type: 'click' | 'success' | 'transition') => void;
   login: (nombre: string, rol: StaffRole) => void;
@@ -58,7 +58,7 @@ export const StoreProvider = ({ children }: React.PropsWithChildren<{}>) => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('fa_settings');
-    return saved ? JSON.parse(saved) : { soundEnabled: true, cloudUrl: '', lastSync: null, dbConnected: false, lastError: null, dolarBlueRate: 1000 };
+    return saved ? JSON.parse(saved) : { soundEnabled: true, cloudUrl: '', lastSync: null, dbConnected: false, lastError: null, dolarBlueRate: 1000, fardoNormalCommission: 3000, fardoPromoCommission: 1500 };
   });
 
   const [sales, setSales] = useState<Sale[]>(() => JSON.parse(localStorage.getItem('fa_sales') || '[]'));

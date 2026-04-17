@@ -2,7 +2,7 @@ import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { PackagePlus, Search, Package, FileUp, X, Download, Tag, Boxes, Edit3, Trash2, Save, AlertTriangle, Layers, Square, Filter } from 'lucide-react';
 import { useStore } from '../store/GlobalContext';
-import { formatCurrencyWithUSD } from '../utils/currency';
+import { formatCurrencyWithUSD, formatUSD } from '../utils/currency';
 import { StaffRole, StockItem } from '../types';
 
 export default function Stock() {
@@ -207,7 +207,8 @@ export default function Stock() {
                     </div>
                   </td>
                   <td className="px-8 py-6 text-right font-black text-slate-900 text-xl tracking-tighter">
-                    {formatCurrencyWithUSD(item.precioSugerido, settings.dolarBlueRate)}
+                    ${item.precioSugerido.toLocaleString('es-CL')}<br/>
+                    <span className="text-xs text-slate-500 font-bold">≈ {formatUSD(item.precioSugerido, settings.dolarBlueRate)}</span>
                   </td>
                   <td className="px-8 py-6 text-center">
                     <div className={`inline-flex flex-col items-center justify-center w-14 h-14 rounded-2xl ${item.stockActual > 3 ? 'bg-amber-50 text-amber-600' : item.stockActual > 0 ? 'bg-amber-50 text-amber-600 animate-pulse border border-amber-200' : 'bg-red-50 text-red-600'}`}>

@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useStore } from '../store/GlobalContext';
-import { formatCurrencyWithUSD, formatARS } from '../utils/currency';
+import { formatCurrencyWithUSD, formatARS, formatUSD } from '../utils/currency';
 
 const LOGO_URL = "https://i.ibb.co/qMSczKZF/Whats-App-Image-2026-04-13-at-12-23-21.jpg";
 
@@ -61,7 +61,7 @@ const ProductRow: React.FC<{ item: any }> = ({ item }) => (
 );
 
 export default function Catalogo() {
-  const { stock, playSound } = useStore();
+  const { stock, playSound, settings } = useStore();
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [providerFilter, setProviderFilter] = useState('TODOS');
@@ -214,7 +214,10 @@ export default function Catalogo() {
                    <div className="text-5xl font-black text-slate-900 tracking-tighter mb-6 print:text-2xl print:mb-2">
                      ${item.precioSugerido.toLocaleString('es-CL')}
                    </div>
-                   <div className="w-full pt-6 border-t border-slate-50 flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest print:pt-2 print:text-[7px]">
+                   <div className="text-xl font-bold text-slate-500 mb-6">
+                    ≈ {formatUSD(item.precioSugerido, settings.dolarBlueRate)}
+                  </div>
+                  <div className="w-full pt-6 border-t border-slate-50 flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest print:pt-2 print:text-[7px]">
                       <div className="flex items-center gap-2">
                          <Tag size={12} className="print:hidden" /> {item.codigo}
                       </div>

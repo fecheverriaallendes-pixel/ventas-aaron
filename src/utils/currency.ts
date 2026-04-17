@@ -5,9 +5,9 @@ export const formatARS = (value: number) => {
 export const formatUSD = (value: number, rate: number) => {
   if (!rate || rate <= 0) return '';
   const usdValue = value / rate;
-  return usdValue.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `${usdValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
 };
 
 export const formatCurrencyWithUSD = (value: number, rate: number) => {
-  return `${formatARS(value)} (≈ ${formatUSD(value, rate)} USD)`;
+  return `${formatARS(value)} (≈ ${formatUSD(value, rate)})`;
 };

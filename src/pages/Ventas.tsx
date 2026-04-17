@@ -169,7 +169,7 @@ export default function Ventas() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 block flex items-center gap-2">
-                    <CreditCard size={14} className="text-amber-500" /> RUT Cliente
+                    <CreditCard size={14} className="text-amber-500" /> DNI Cliente
                   </label>
                   <input required type="text" className="w-full px-7 py-4 bg-slate-50 border-2 border-slate-100 rounded-[24px] font-black text-lg" placeholder="12.345.678-9" value={editingSale.rut || ''} onChange={(e) => setEditingSale({...editingSale, rut: e.target.value})}/>
                 </div>

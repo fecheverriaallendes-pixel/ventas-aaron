@@ -18,7 +18,8 @@ import {
   Wallet,
   Activity,
   Cloud,
-  BookOpen
+  BookOpen,
+  LayoutGrid
 } from 'lucide-react';
 
 import Home from './pages/Home';
@@ -30,6 +31,7 @@ import Despachos from './pages/Despachos';
 import Etiquetas from './pages/Etiquetas';
 import Configuracion from './pages/Configuracion';
 import Comisiones from './pages/Comisiones';
+import Catalogo from './pages/Catalogo';
 import Proveedores from './pages/Proveedores';
 import { useStore } from './store/GlobalContext';
 import { StaffRole } from './types';
@@ -45,6 +47,7 @@ const Sidebar = ({ isOpen, toggle }: { isOpen: boolean; toggle: () => void }) =>
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', roles: [StaffRole.ADMIN, StaffRole.VENDEDOR, StaffRole.BODEGA, StaffRole.DESPACHO] },
     { name: 'Ventas y Clientes', icon: FileText, path: '/ventas', roles: [StaffRole.ADMIN, StaffRole.VENDEDOR] },
     { name: 'Nómina Comisiones', icon: Coins, path: '/comisiones', roles: [StaffRole.ADMIN] },
+    { name: 'Catálogo Maestro', icon: LayoutGrid, path: '/catalogo', roles: [StaffRole.ADMIN, StaffRole.VENDEDOR] },
     { name: 'Pagos Proveedores', icon: Wallet, path: '/proveedores', roles: [StaffRole.ADMIN] },
     { name: 'Inventario Stock', icon: Package, path: '/stock', roles: [StaffRole.ADMIN, StaffRole.BODEGA] },
     { name: 'Logística Despacho', icon: Truck, path: '/despachos', roles: [StaffRole.ADMIN, StaffRole.VENDEDOR, StaffRole.BODEGA, StaffRole.DESPACHO] },
@@ -179,6 +182,7 @@ export default function App() {
               <Route path="/etiquetas" element={<ProtectedRoute roles={[StaffRole.ADMIN, StaffRole.VENDEDOR, StaffRole.BODEGA, StaffRole.DESPACHO]}><Etiquetas /></ProtectedRoute>} />
               <Route path="/configuracion" element={<ProtectedRoute roles={[StaffRole.ADMIN]}><Configuracion /></ProtectedRoute>} />
               <Route path="/comisiones" element={<ProtectedRoute roles={[StaffRole.ADMIN]}><Comisiones /></ProtectedRoute>} />
+              <Route path="/catalogo" element={<ProtectedRoute roles={[StaffRole.ADMIN, StaffRole.VENDEDOR]}><Catalogo /></ProtectedRoute>} />
               <Route path="/proveedores" element={<ProtectedRoute roles={[StaffRole.ADMIN]}><Proveedores /></ProtectedRoute>} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>

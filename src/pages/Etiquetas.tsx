@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Printer, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useStore } from '../store/GlobalContext';
-import { Sale, SaleType, SaleStatus, CommissionType } from '../types';
+import { Sale, SaleType, SaleStatus, CommissionType, StockItem } from '../types';
 
 const LOGO_URL = "https://i.ibb.co/qMSczKZF/Whats-App-Image-2026-04-13-at-12-23-21.jpg";
 
-const Label = ({ sale }: { sale: Sale }) => (
+const Label = ({ sale, stock }: { sale: Sale, stock: StockItem[] }) => (
   <div className="w-[100mm] h-[70mm] bg-white border-2 border-black p-4 flex flex-row items-stretch overflow-hidden print:m-0 print:w-[100mm] print:h-[70mm]">
     <div className="w-[35mm] flex flex-col border-r-2 border-black pr-4 justify-between">
       <div className="flex flex-col items-center">
@@ -26,7 +26,7 @@ const Label = ({ sale }: { sale: Sale }) => (
         <div className="mb-4">
           <p className="text-[9px] font-black uppercase text-slate-500 mb-1">Destinatario / Cliente</p>
           <p className="text-xl font-black uppercase leading-tight line-clamp-1">{sale.cliente}</p>
-          <p className="text-sm font-bold text-slate-700 mt-1">{sale.rut || 'RUT PENDIENTE'}</p>
+          <p className="text-sm font-bold text-slate-700 mt-1">{sale.rut || 'DNI PENDIENTE'}</p>
         </div>
         <div className="mb-4">
           <p className="text-[9px] font-black uppercase text-slate-500 mb-1">Dirección de Entrega</p>
@@ -38,12 +38,11 @@ const Label = ({ sale }: { sale: Sale }) => (
       <div className="grid grid-cols-2 gap-4 border-t border-black pt-4">
         <div>
           <p className="text-[9px] font-black uppercase text-slate-500 mb-1">Producto</p>
-          <p className="text-lg font-black leading-none">{sale.variante || sale.codigoFardo}</p>
-          <p className="text-[10px] font-bold uppercase mt-1 truncate">{sale.codigoFardo}</p>
+          <p className="text-[14px] font-black leading-none line-clamp-2">{sale.variante || stock.find(s => s.codigo === sale.codigoFardo)?.tipo || 'Producto sin nombre'}</p>
         </div>
         <div className="text-right flex flex-col justify-end">
           <p className="text-[9px] font-black uppercase text-slate-500">Contacto</p>
-          <p className="text-lg font-black leading-none">{sale.telefono}</p>
+          <p className="text-sm font-black leading-tight break-all">{sale.telefono}</p>
           <p className="text-[8px] font-bold uppercase text-slate-400 mt-1">Fardos Aaron S.A.</p>
         </div>
       </div>
@@ -52,7 +51,7 @@ const Label = ({ sale }: { sale: Sale }) => (
 );
 
 export default function Etiquetas() {
-  const { sales } = useStore();
+  const { sales, stock } = useStore();
   const [individualSale, setIndividualSale] = useState<Sale | null>(null);
   const [showDemo, setShowDemo] = useState(false);
   const readyToPrint = sales.filter(s => s.datosCompletos && !s.enviado).sort((a, b) => b.numeroVenta - a.numeroVenta);
@@ -96,13 +95,13 @@ export default function Etiquetas() {
         {showDemo && (
           <div className="relative group w-full flex flex-col items-center">
             <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 bg-amber-500 text-white text-[10px] font-black px-4 py-1 rounded-full shadow-lg">ETIQUETA DE MUESTRA</div>
-            <div className="relative bg-white p-4 border-4 border-amber-200 rounded-[32px] shadow-lg scale-75 sm:scale-100 origin-top overflow-hidden"><Label sale={demoSale} /></div>
+            <div className="relative bg-white p-4 border-4 border-amber-200 rounded-[32px] shadow-lg scale-75 sm:scale-100 origin-top overflow-hidden"><Label sale={demoSale} stock={stock} /></div>
           </div>
         )}
         {readyToPrint.map((sale) => (
           <div key={sale.id} className="relative group animate-in fade-in slide-in-from-bottom duration-500 w-full flex flex-col items-center">
             <div className="relative bg-white p-4 border-4 border-dashed border-slate-200 rounded-[32px] hover:border-amber-400 transition-all shadow-lg scale-75 sm:scale-100 origin-top overflow-hidden">
-              <Label sale={sale} />
+              <Label sale={sale} stock={stock} />
               <div className="absolute inset-0 bg-slate-900/80 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center backdrop-blur-sm">
                 <button onClick={() => handlePrintSingle(sale)} className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded-2xl font-black flex items-center gap-3 shadow-2xl transition-all">
                   <Printer size={20} /> IMPRIMIR ÉSTA
@@ -121,7 +120,7 @@ export default function Etiquetas() {
         )}
       </div>
       <div className="hidden print-only">
-        {individualSale ? <div className="label-container"><Label sale={individualSale} /></div> : readyToPrint.map((sale) => <div key={sale.id} className="label-container"><Label sale={sale} /></div>)}
+        {individualSale ? <div className="label-container"><Label sale={individualSale} stock={stock} /></div> : readyToPrint.map((sale) => <div key={sale.id} className="label-container"><Label sale={sale} stock={stock} /></div>)}
       </div>
       <style>{`
         @media print {

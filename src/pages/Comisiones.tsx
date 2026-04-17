@@ -262,9 +262,9 @@ export default function Comisiones() {
         <div className="absolute top-[-20%] right-[-10%] w-[40%] h-[150%] bg-amber-600/20 blur-[100px] rounded-full rotate-12"></div>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-10">
           <div className="space-y-4">
-            <p className="text-amber-400 text-xs font-black uppercase tracking-[0.4em]">Total a Desembolsar este Sábado</p>
-            <h3 className="text-7xl font-black tracking-tighter leading-none">{formatARS(totalCommissionsToPay || 0)}</h3>
-            {settings.dolarBlueRate > 0 && <p className="text-amber-200 font-bold text-xl">≈ {formatCurrencyWithUSD(totalCommissionsToPay || 0, settings.dolarBlueRate).split('≈')[1]?.replace(')', '').trim()}</p>}
+            <p className="text-amber-500 text-xs font-black uppercase tracking-[0.4em]">Total a Desembolsar este Sábado</p>
+            <h3 className="text-7xl font-black tracking-tighter leading-none text-amber-200">{formatARS(totalCommissionsToPay || 0)}</h3>
+            {settings.dolarBlueRate > 0 && <p className="text-amber-100 font-bold text-xl">≈ {formatCurrencyWithUSD(totalCommissionsToPay || 0, settings.dolarBlueRate).split('≈')[1]?.replace(')', '').trim()}</p>}
             <p className="text-slate-400 font-bold italic">Basado en {weeklySales.length} fardos/unidades procesadas.</p>
           </div>
           <div className="flex gap-4">
