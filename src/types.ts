@@ -70,10 +70,14 @@ export interface StaffMember {
 export interface StockItem {
   id: string;
   codigo: string;
-  tipo: string;
-  proveedor: string; 
+  tipo: string; // Nombre Producto
+  categoria: string;
+  presentacion: string;
+  calidad: string; // Nuevo campo
+  etiqueta: string;
+  detalle?: string;
   precioCosto: number;
-  precioSugerido: number;
+  precioSugerido: number; // Precio
   stockActual: number; 
   disponible: boolean;
   unidad: 'FARDO' | 'PIEZA';

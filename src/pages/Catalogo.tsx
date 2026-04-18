@@ -1,19 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
 import { 
   Printer, 
-  LayoutGrid, 
-  List, 
   Search, 
-  Package, 
   Tag, 
-  Clock,
   ChevronLeft,
-  ArrowUpDown,
-  Layers,
-  Square,
-  Filter,
-  FileDown
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useStore } from '../store/GlobalContext';
@@ -26,55 +16,38 @@ type SortOption = 'alpha-asc' | 'alpha-desc' | 'price-asc' | 'price-desc';
 const TableHeader = () => (
   <thead>
     <tr className="border-b-2 border-slate-900 bg-slate-50 print:bg-slate-100">
-      <th className="px-2 py-2 text-[10px] font-black uppercase text-left w-12">Cód</th>
       <th className="px-2 py-2 text-[10px] font-black uppercase text-left">Producto</th>
-      <th className="px-2 py-2 text-[10px] font-black uppercase text-right w-20">Valor</th>
-      <th className="px-2 py-2 text-[10px] font-black uppercase text-center w-8">Stk</th>
+      <th className="px-2 py-2 text-[10px] font-black uppercase text-left">Presentación</th>
+      <th className="px-2 py-2 text-[10px] font-black uppercase text-left">Calidad</th>
+      <th className="px-2 py-2 text-[10px] font-black uppercase text-right">Precio</th>
+      <th className="px-2 py-2 text-[10px] font-black uppercase text-left">Notas</th>
     </tr>
   </thead>
 );
 
 const ProductRow: React.FC<{ item: any }> = ({ item }) => (
   <tr className="border-b border-slate-100 print:border-slate-200">
-    <td className="px-2 py-1.5 font-mono font-bold text-slate-400 text-[10px] uppercase">
-      {item.codigo.replace('GF-','')}
+    <td className="px-2 py-1.5 font-bold text-slate-900 uppercase text-[11px]">
+      {item.tipo} {item.etiqueta === 'DESTACADO' && '⭐'}
     </td>
-    <td className="px-2 py-1.5">
-      <div className="flex flex-col">
-        <span className="font-black text-slate-900 uppercase text-[11px] leading-tight italic line-clamp-1">
-          {item.tipo}
-        </span>
-        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
-          ({item.proveedor})
-        </span>
-      </div>
-    </td>
+    <td className="px-2 py-1.5 text-[10px] text-slate-600">{item.presentacion}</td>
+    <td className="px-2 py-1.5 text-[10px] text-slate-600">{item.calidad}</td>
     <td className="px-2 py-1.5 text-right font-black text-slate-900 text-xs">
       ${item.precioSugerido.toLocaleString('es-CL')}
     </td>
-    <td className="px-2 py-1.5 text-center">
-      <span className={`font-black text-[10px] ${item.stockActual < 5 ? 'text-red-600' : 'text-slate-900'}`}>
-        {item.stockActual}
-      </span>
-    </td>
+    <td className="px-2 py-1.5 text-[10px] text-slate-500 italic">{item.detalle}</td>
   </tr>
 );
 
 export default function Catalogo() {
   const { stock, playSound, settings } = useStore();
-  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
-  const [providerFilter, setProviderFilter] = useState('TODOS');
+  const [categoriaFilter, setCategoriaFilter] = useState('TODOS');
   const [sortOrder, setSortOrder] = useState<SortOption>('alpha-asc');
-  
-  const searchParams = new URLSearchParams(location.search);
-  const [viewMode, setViewMode] = useState<'digital' | 'print'>(
-    (searchParams.get('mode') as 'digital' | 'print') || 'digital'
-  );
 
-  const uniqueProviders = useMemo(() => {
-    const providers = stock.map(item => item.proveedor.toUpperCase());
-    return ['TODOS', ...Array.from(new Set(providers))].sort();
+  const uniqueCategorias = useMemo(() => {
+    const categorias = stock.map(item => (item.categoria || 'SIN CATEGORÍA').toUpperCase());
+    return ['TODOS', ...Array.from(new Set(categorias))].sort();
   }, [stock]);
 
   const sortedAndFilteredStock = useMemo(() => {
@@ -82,10 +55,15 @@ export default function Catalogo() {
       item.stockActual > 0 &&
       (item.tipo.toLowerCase().includes(searchTerm.toLowerCase()) || 
        item.codigo.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (providerFilter === 'TODOS' || item.proveedor.toUpperCase() === providerFilter)
+      (categoriaFilter === 'TODOS' || (item.categoria || 'SIN CATEGORÍA').toUpperCase() === categoriaFilter)
     );
 
     return result.sort((a, b) => {
+      // Prioritize DESTACADO
+      const aDest = (a.etiqueta || '').toUpperCase() === 'DESTACADO' ? -1 : 1;
+      const bDest = (b.etiqueta || '').toUpperCase() === 'DESTACADO' ? -1 : 1;
+      if (aDest !== bDest) return aDest - bDest;
+
       switch (sortOrder) {
         case 'alpha-asc': return a.tipo.localeCompare(b.tipo);
         case 'alpha-desc': return b.tipo.localeCompare(a.tipo);
@@ -94,15 +72,7 @@ export default function Catalogo() {
         default: return 0;
       }
     });
-  }, [stock, searchTerm, providerFilter, sortOrder]);
-
-  const printColumns = useMemo(() => {
-    const half = Math.ceil(sortedAndFilteredStock.length / 2);
-    return {
-      left: sortedAndFilteredStock.slice(0, half),
-      right: sortedAndFilteredStock.slice(half)
-    };
-  }, [sortedAndFilteredStock]);
+  }, [stock, searchTerm, categoriaFilter, sortOrder]);
 
   const handlePrint = () => {
     playSound('success');
@@ -112,7 +82,7 @@ export default function Catalogo() {
   const today = new Date().toLocaleDateString('es-CL');
 
   return (
-    <div className={`space-y-8 max-w-[1200px] mx-auto animate-in fade-in duration-500 pb-20 ${viewMode === 'digital' ? 'view-is-digital' : 'view-is-list'}`}>
+    <div className="space-y-8 max-w-[1200px] mx-auto animate-in fade-in duration-500 pb-20 view-is-list">
       <div className="no-print space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
@@ -126,26 +96,11 @@ export default function Catalogo() {
           </div>
 
           <div className="flex flex-wrap items-center gap-4">
-            <div className="flex bg-slate-200 p-1.5 rounded-[24px] shadow-inner">
-              <button 
-                onClick={() => { setViewMode('digital'); playSound('click'); }}
-                className={`flex items-center gap-2 px-6 py-3 rounded-[18px] font-black text-[10px] uppercase tracking-widest transition-all ${viewMode === 'digital' ? 'bg-amber-600 text-white shadow-lg' : 'text-slate-500'}`}
-              >
-                <LayoutGrid size={18} /> Digital
-              </button>
-              <button 
-                onClick={() => { setViewMode('print'); playSound('click'); }}
-                className={`flex items-center gap-2 px-6 py-3 rounded-[18px] font-black text-[10px] uppercase tracking-widest transition-all ${viewMode === 'print' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-500'}`}
-              >
-                <List size={18} /> Impreso
-              </button>
-            </div>
             <button 
               onClick={handlePrint}
-              className={`flex items-center gap-3 px-8 py-4 text-white rounded-[24px] font-black text-xs uppercase tracking-widest transition-all shadow-2xl active:scale-95 ${viewMode === 'digital' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-amber-600 hover:bg-amber-700'}`}
+              className="flex items-center gap-3 px-8 py-4 bg-amber-600 text-white rounded-[24px] font-black text-xs uppercase tracking-widest transition-all shadow-2xl active:scale-95"
             >
-              {viewMode === 'digital' ? <FileDown size={18} /> : <Printer size={18} />}
-              {viewMode === 'digital' ? 'Guardar PDF Catálogo' : 'Imprimir Listado'}
+              <Printer size={18} /> Imprimir Listado
             </button>
           </div>
         </div>
@@ -160,11 +115,11 @@ export default function Catalogo() {
           />
           <select 
             className="w-full px-8 py-5 rounded-[28px] border-2 border-slate-100 bg-white font-black text-[10px] uppercase outline-none focus:border-amber-500 shadow-sm cursor-pointer"
-            value={providerFilter}
-            onChange={(e) => { setProviderFilter(e.target.value); playSound('click'); }}
+            value={categoriaFilter}
+            onChange={(e) => { setCategoriaFilter(e.target.value); playSound('click'); }}
           >
-            {uniqueProviders.map(p => (
-              <option key={p} value={p}>{p === 'TODOS' ? 'PROVEEDORES: TODOS' : `ORIGEN: ${p}`}</option>
+            {uniqueCategorias.map(p => (
+              <option key={p} value={p}>{p === 'TODOS' ? 'CATEGORÍAS: TODAS' : `CATEGORÍA: ${p}`}</option>
             ))}
           </select>
           <select 
@@ -186,7 +141,7 @@ export default function Catalogo() {
           <div className="flex items-center gap-4">
             <img src={LOGO_URL} alt="Logo" className="w-12 h-12 grayscale contrast-150" />
             <h1 className="text-xl font-black uppercase tracking-tighter">
-              {viewMode === 'digital' ? 'Catálogo Maestro El Garage del Fardo' : 'Lista Oficial de Precios El Garage del Fardo'}
+              Lista Oficial de Precios El Garage del Fardo
             </h1>
           </div>
           <div className="text-right">
@@ -195,60 +150,14 @@ export default function Catalogo() {
           </div>
         </div>
 
-        {viewMode === 'digital' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 print:grid-cols-2 print:gap-4 print:block">
-            {sortedAndFilteredStock.map(item => (
-              <div key={item.id} className="digital-card bg-white rounded-[40px] border border-slate-100 shadow-xl overflow-hidden flex flex-col group hover:border-amber-400 transition-all print:break-inside-avoid print:shadow-none print:border-2 print:rounded-2xl print:mb-4 print:w-[48%] print:inline-flex print:mr-[2%]">
-                <div className="p-6 bg-slate-900 text-white text-center relative print:bg-white print:text-slate-900 print:border-b print:p-3">
-                  <div className="absolute top-2 right-4 flex items-center gap-1.5 px-2 py-0.5 bg-white/10 rounded-full text-[8px] font-black uppercase tracking-widest print:bg-slate-100 print:text-slate-500">
-                    {item.unidad}
-                  </div>
-                  <h3 className="font-black uppercase tracking-tight text-lg leading-tight line-clamp-2 min-h-[3rem] flex items-center justify-center italic print:text-xs print:min-h-0">
-                    {item.tipo}
-                  </h3>
-                </div>
-                <div className="p-8 flex flex-col items-center text-center flex-1 print:p-4">
-                   <div className="px-4 py-1.5 bg-amber-100 text-amber-600 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 print:mb-2 print:text-[8px] print:py-0.5">
-                     {item.proveedor}
-                   </div>
-                   <div className="text-5xl font-black text-slate-900 tracking-tighter mb-6 print:text-2xl print:mb-2">
-                     ${item.precioSugerido.toLocaleString('es-CL')}
-                   </div>
-                   <div className="text-xl font-bold text-slate-500 mb-6">
-                    ≈ {formatUSD(item.precioSugerido, settings.dolarBlueRate)}
-                  </div>
-                  <div className="w-full pt-6 border-t border-slate-50 flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest print:pt-2 print:text-[7px]">
-                      <div className="flex items-center gap-2">
-                         <Tag size={12} className="print:hidden" /> {item.codigo}
-                      </div>
-                      <div className="flex items-center gap-2 text-amber-500">
-                         <Package size={12} className="print:hidden" /> STOCK: {item.stockActual}
-                      </div>
-                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="print-columns-container flex flex-col md:flex-row print:flex-row gap-8">
-            <div className="flex-1">
-              <table className="w-full border-collapse">
-                <TableHeader />
-                <tbody>
-                  {printColumns.left.map(item => <ProductRow key={item.id} item={item} />)}
-                </tbody>
-              </table>
-            </div>
-            <div className="flex-1">
-              <table className="w-full border-collapse">
-                <TableHeader />
-                <tbody>
-                  {printColumns.right.map(item => <ProductRow key={item.id} item={item} />)}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        <div className="print-columns-container">
+          <table className="w-full border-collapse">
+            <TableHeader />
+            <tbody>
+              {sortedAndFilteredStock.map(item => <ProductRow key={item.id} item={item} />)}
+            </tbody>
+          </table>
+        </div>
 
         {sortedAndFilteredStock.length === 0 && (
           <div className="py-40 text-center opacity-30 italic font-black uppercase tracking-widest">
@@ -275,25 +184,12 @@ export default function Catalogo() {
           }
           .no-print { display: none !important; }
           .catalogo-content { width: 100% !important; margin: 0 !important; }
-          main { margin-left: 0 !important; padding: 0 !important; }
-          header { display: none !important; }
           
-          .view-is-list .catalogo-content > div {
-            display: flex !important;
-            flex-direction: row !important;
-            gap: 20px !important;
-          }
-
-          .view-is-digital .digital-card {
-            display: inline-flex !important;
-            vertical-align: top;
-          }
-
           table {
             page-break-inside: auto;
           }
 
-          tr, .digital-card {
+          tr {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
           }

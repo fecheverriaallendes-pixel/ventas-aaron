@@ -1,16 +1,17 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { PackagePlus, Search, Package, FileUp, X, Download, Tag, Boxes, Edit3, Trash2, Save, AlertTriangle, Layers, Square, Filter } from 'lucide-react';
+import { PackagePlus, Search, Package, FileUp, X, Download, Tag, Boxes, Edit3, Trash2, Save, AlertTriangle, Layers, Square, Filter, Settings } from 'lucide-react';
 import { useStore } from '../store/GlobalContext';
 import { formatCurrencyWithUSD, formatUSD } from '../utils/currency';
 import { StaffRole, StockItem } from '../types';
 
 export default function Stock() {
-  const { stock, addStockItem, updateStockItem, removeStockItem, bulkAddStock, currentUser, playSound, settings } = useStore();
+  const { stock, addStockItem, updateStockItem, removeStockItem, bulkAddStock, currentUser, playSound, settings, categories, addCategory, editCategory, removeCategory } = useStore();
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
-  const [providerFilter, setProviderFilter] = useState('TODOS');
+  const [categoryFilter, setCategoryFilter] = useState('TODOS');
   const [isAdding, setIsAdding] = useState(false);
+  const [isManagingCategories, setIsManagingCategories] = useState(false);
   const [editingItem, setEditingItem] = useState<StockItem | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -24,7 +25,10 @@ export default function Stock() {
   const [newBale, setNewBale] = useState({ 
     codigo: '', 
     tipo: '', 
-    proveedor: '', 
+    categoria: 'DEPORTIVO',
+    presentacion: '',
+    etiqueta: '',
+    detalle: '',
     precioCosto: 0, 
     precioSugerido: 0, 
     stockActual: 1,
@@ -34,19 +38,18 @@ export default function Stock() {
 
   const canModify = currentUser?.rol === StaffRole.ADMIN || currentUser?.rol === StaffRole.BODEGA;
 
-  const uniqueProviders = useMemo(() => {
-    const providers = stock.map(item => item.proveedor.toUpperCase());
-    return ['TODOS', ...Array.from(new Set(providers))].sort();
-  }, [stock]);
+  const uniqueCategories = useMemo(() => {
+    return ['TODOS', ...categories].sort();
+  }, [categories]);
 
   const filteredStock = useMemo(() => {
     return stock.filter(item => {
       const matchesSearch = item.codigo.toLowerCase().includes(searchTerm.toLowerCase()) || 
                            item.tipo.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesProvider = providerFilter === 'TODOS' || item.proveedor.toUpperCase() === providerFilter;
-      return matchesSearch && matchesProvider;
+      const matchesCategory = categoryFilter === 'TODOS' || (item.categoria || 'SIN CATEGORÍA').toUpperCase() === categoryFilter;
+      return matchesSearch && matchesCategory;
     });
-  }, [stock, searchTerm, providerFilter]);
+  }, [stock, searchTerm, categoryFilter]);
 
   const downloadFormat = () => {
     const csvContent = "codigo,tipo,proveedor,precioCosto,precioSugerido,stockActual,unidad\nF-101,Polerones Premium,Bale Center,100000,150000,10,FARDO\nU-102,Jeans Unitario,USA Direct,8000,15000,50,PIEZA";
@@ -72,12 +75,15 @@ export default function Stock() {
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
-        const [codigo, tipo, proveedor, costo, precio, stockCant, unidad] = line.split(',');
+        const [codigo, tipo, categoria, presentacion, etiqueta, detalle, costo, precio, stockCant, unidad] = line.split(',');
         if (codigo && tipo && !isNaN(Number(precio))) {
           items.push({
             codigo: codigo.trim().toUpperCase(),
             tipo: tipo.trim(),
-            proveedor: proveedor?.trim().toUpperCase() || 'GENERAL',
+            categoria: categoria?.trim().toUpperCase() || 'DEPORTIVO',
+            presentacion: presentacion?.trim() || '',
+            etiqueta: etiqueta?.trim().toUpperCase() || '',
+            detalle: detalle?.trim() || '',
             precioCosto: Number(costo) || 0,
             precioSugerido: Number(precio),
             stockActual: Number(stockCant) || 1,
@@ -94,8 +100,8 @@ export default function Stock() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!canModify) return;
-    addStockItem({ ...newBale, proveedor: newBale.proveedor.toUpperCase() });
-    setNewBale({ codigo: '', tipo: '', proveedor: '', precioCosto: 0, precioSugerido: 0, stockActual: 1, unidad: 'FARDO' });
+    addStockItem({ ...newBale });
+    setNewBale({ codigo: '', tipo: '', categoria: 'DEPORTIVO', presentacion: '', calidad: '', etiqueta: '', detalle: '', precioCosto: 0, precioSugerido: 0, stockActual: 1, unidad: 'FARDO' });
     setIsAdding(false);
     playSound('success');
   };
@@ -124,6 +130,12 @@ export default function Stock() {
         </div>
         {canModify && (
           <div className="flex flex-wrap gap-4">
+            <button 
+              onClick={() => setIsManagingCategories(true)}
+              className="flex items-center gap-2 px-6 py-4 bg-white border-2 border-slate-100 text-slate-900 rounded-[24px] font-black text-xs uppercase hover:bg-slate-50 transition-all shadow-sm"
+            >
+              <Settings size={18} /> Categorías
+            </button>
             <button 
               onClick={downloadFormat}
               className="flex items-center gap-2 px-8 py-4 bg-white border-2 border-slate-100 text-slate-900 rounded-[24px] font-black text-xs uppercase hover:bg-slate-50 transition-all shadow-sm"
@@ -163,11 +175,11 @@ export default function Stock() {
           <Filter className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
           <select 
             className="w-full pl-16 pr-8 py-6 rounded-[32px] border-2 border-slate-100 bg-white font-black text-sm uppercase tracking-widest outline-none focus:border-amber-400 appearance-none shadow-sm cursor-pointer"
-            value={providerFilter}
-            onChange={(e) => { setProviderFilter(e.target.value); playSound('click'); }}
+            value={categoryFilter}
+            onChange={(e) => { setCategoryFilter(e.target.value); playSound('click'); }}
           >
-            {uniqueProviders.map(p => (
-              <option key={p} value={p}>{p === 'TODOS' ? 'Filtrar: TODOS LOS PROVEEDORES' : `Proveedor: ${p}`}</option>
+            {uniqueCategories.map(p => (
+              <option key={p} value={p}>{p === 'TODOS' ? 'Filtrar: TODAS LAS CATEGORÍAS' : `Categoría: ${p}`}</option>
             ))}
           </select>
         </div>
@@ -180,9 +192,9 @@ export default function Stock() {
               <tr className="bg-slate-50/50 border-b border-slate-100">
                 <th className="px-8 py-7 text-[10px] font-black text-slate-400 uppercase tracking-widest">Unidad</th>
                 <th className="px-8 py-7 text-[10px] font-black text-slate-400 uppercase tracking-widest">Código</th>
-                <th className="px-8 py-7 text-[10px] font-black text-slate-400 uppercase tracking-widest">Descripción Producto</th>
+                <th className="px-8 py-7 text-[10px] font-black text-slate-400 uppercase tracking-widest">Detalle</th>
                 <th className="px-8 py-7 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Precio Venta</th>
-                <th className="px-8 py-7 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Cant.</th>
+                <th className="px-8 py-7 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Etiqueta</th>
                 {canModify && <th className="px-8 py-7 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Gestión</th>}
               </tr>
             </thead>
@@ -202,7 +214,10 @@ export default function Stock() {
                       </div>
                       <div className="flex flex-col">
                         <span className="font-black text-slate-900 uppercase text-sm tracking-tighter leading-none">{item.tipo}</span>
-                        <span className="text-[9px] font-bold text-amber-500 uppercase mt-1 tracking-widest">{item.proveedor}</span>
+                        <span className="text-[9px] font-bold text-amber-500 uppercase mt-1 tracking-widest">{item.categoria} - {item.presentacion}</span>
+                        {item.detalle && (
+                          <span className="text-[9px] font-medium text-slate-500 italic mt-0.5">{item.detalle}</span>
+                        )}
                       </div>
                     </div>
                   </td>
@@ -211,10 +226,9 @@ export default function Stock() {
                     <span className="text-xs text-slate-500 font-bold">≈ {formatUSD(item.precioSugerido, settings.dolarBlueRate)}</span>
                   </td>
                   <td className="px-8 py-6 text-center">
-                    <div className={`inline-flex flex-col items-center justify-center w-14 h-14 rounded-2xl ${item.stockActual > 3 ? 'bg-amber-50 text-amber-600' : item.stockActual > 0 ? 'bg-amber-50 text-amber-600 animate-pulse border border-amber-200' : 'bg-red-50 text-red-600'}`}>
-                      <span className="text-xl font-black leading-none">{item.stockActual}</span>
-                      <span className="text-[8px] font-black uppercase mt-1">{item.unidad === 'FARDO' ? 'Uds' : 'Piezas'}</span>
-                    </div>
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${item.etiqueta === 'DESTACADO' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
+                      {item.etiqueta || 'NORMAL'}
+                    </span>
                   </td>
                   {canModify && (
                     <td className="px-8 py-6 text-center">
@@ -268,22 +282,32 @@ export default function Stock() {
                   <input required className="w-full px-7 py-5 bg-slate-50 rounded-[28px] border-2 border-transparent focus:border-amber-500 outline-none font-black text-xl uppercase" placeholder="F-XXX" value={newBale.codigo} onChange={(e) => setNewBale({...newBale, codigo: e.target.value.toUpperCase()})}/>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 block">Cant. Inicial ({newBale.unidad === 'FARDO' ? 'Fardos' : 'Unidades'})</label>
-                  <input required type="number" onWheel={(e) => e.currentTarget.blur()} className="w-full px-7 py-5 bg-slate-50 rounded-[28px] border-2 border-transparent focus:border-amber-500 outline-none font-black text-xl" value={newBale.stockActual} onChange={(e) => setNewBale({...newBale, stockActual: Number(e.target.value)})}/>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 block">Categoría</label>
+                  <select required className="w-full px-7 py-5 bg-slate-50 rounded-[28px] border-2 border-transparent focus:border-amber-500 outline-none font-black text-xl uppercase" value={newBale.categoria} onChange={(e) => setNewBale({...newBale, categoria: e.target.value})}>
+                    {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                  </select>
                 </div>
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 block">Descripción del Producto</label>
                 <input required className="w-full px-7 py-5 bg-slate-50 rounded-[28px] border-2 border-transparent focus:border-amber-500 outline-none font-bold text-lg" placeholder="Ej: Abrigo Lana Hombre..." value={newBale.tipo} onChange={(e) => setNewBale({...newBale, tipo: e.target.value})}/>
               </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 block">Detalle o Característica (Opcional)</label>
+                <input className="w-full px-7 py-5 bg-slate-50 rounded-[28px] border-2 border-transparent focus:border-amber-500 outline-none font-bold text-lg" placeholder="Ej: Estado, detalles específicos..." value={newBale.detalle} onChange={(e) => setNewBale({...newBale, detalle: e.target.value})}/>
+              </div>
               <div className="grid grid-cols-3 gap-6">
                 <div className="col-span-1 space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 block">Proveedor (IM, CANADA...)</label>
-                  <input required className="w-full px-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold uppercase focus:border-amber-500 outline-none" value={newBale.proveedor} onChange={(e) => setNewBale({...newBale, proveedor: e.target.value.toUpperCase()})}/>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 block">Presentación (Ej: 25kg)</label>
+                  <input className="w-full px-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold uppercase focus:border-amber-500 outline-none" value={newBale.presentacion} onChange={(e) => setNewBale({...newBale, presentacion: e.target.value})}/>
                 </div>
                 <div className="col-span-1 space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 block">Costo ($)</label>
-                  <input type="number" className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-slate-500 outline-none focus:border-amber-500 border-2 border-transparent transition-all" value={newBale.precioCosto || ''} onChange={(e) => setNewBale({...newBale, precioCosto: Number(e.target.value)})}/>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 block">Calidad (Ej: 1ra, 2da)</label>
+                  <input className="w-full px-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold uppercase focus:border-amber-500 outline-none" value={(newBale as any).calidad || ''} onChange={(e) => setNewBale({...newBale, calidad: e.target.value})}/>
+                </div>
+                <div className="col-span-1 space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 block">Etiqueta (Destacado, Promo)</label>
+                  <input className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-slate-500 outline-none focus:border-amber-500 border-2 border-transparent transition-all" value={newBale.etiqueta} onChange={(e) => setNewBale({...newBale, etiqueta: e.target.value.toUpperCase()})}/>
                 </div>
                 <div className="col-span-1 space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 block">Precio Venta ($)</label>
@@ -375,6 +399,31 @@ export default function Stock() {
               <button onClick={() => setDeletingId(null)} className="flex-1 py-5 bg-slate-100 text-slate-900 rounded-[24px] font-black uppercase text-xs tracking-widest">Abortar</button>
               <button onClick={handleDelete} className="flex-1 py-5 bg-red-600 text-white rounded-[24px] font-black shadow-2xl shadow-red-600/30 uppercase text-xs tracking-widest">Confirmar Purga</button>
             </div>
+          </div>
+        </div>
+      )}
+      {isManagingCategories && (
+        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[56px] shadow-2xl w-full max-w-lg p-12 space-y-6">
+             <div className="flex justify-between items-center">
+               <h3 className="text-3xl font-black uppercase">Categorías</h3>
+               <button onClick={() => setIsManagingCategories(false)} className="p-2"><X size={24} /></button>
+             </div>
+             <div className="space-y-2 max-h-[300px] overflow-y-auto">
+               {categories.map((cat, i) => (
+                 <div key={i} className="flex gap-2 p-2 border-b">
+                   <span className="flex-1 font-bold">{cat}</span>
+                   <button onClick={() => removeCategory(cat)} className="text-red-500 text-xs">Eliminar</button>
+                 </div>
+               ))}
+             </div>
+             <div className="flex gap-2">
+                <input id="newCat" className="flex-1 p-3 border rounded-xl" placeholder="Nueva Categoría" />
+                <button onClick={() => {
+                   const input = document.getElementById('newCat') as HTMLInputElement;
+                   if (input.value) { addCategory(input.value.toUpperCase()); input.value = ''; }
+                }} className="p-3 bg-amber-600 text-white rounded-xl">Agregar</button>
+             </div>
           </div>
         </div>
       )}
